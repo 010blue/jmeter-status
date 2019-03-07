@@ -19,7 +19,7 @@
     ./fetch
 
     # scheduled tasks, using crontab, every 10 minutes
-    */10 * * * * /path/service/fetch
+    */10 * * * * cd /path/service && ./fetch
 
 ## start web...
 use nginx or others to point to web directory
