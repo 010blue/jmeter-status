@@ -71,7 +71,7 @@
     function init(website){
         var times=[],errRates=[],counts=[],errCounts=[],files=[];
 
-        $("#status-container,apis-container").html("");
+        $("#status-container,#apis-container").html("");
         // init status chart
         $(website.data).each(function(k,v){
             times.push(timestamp2date(v.timestamp));
