@@ -2,7 +2,7 @@
 
 ## install dependencies
     # web
-    cd web && node install
+    cd web && npm install
 
     # golang, using dep
     cd service && dep ensure
