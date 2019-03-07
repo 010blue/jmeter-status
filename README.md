@@ -22,3 +22,5 @@
     */10 * * * * /path/service/fetch
 
 ## start web...
+### use nginx or others to point to web directory
+![Image text](https://raw.githubusercontent.com/010blue/jmeter-status/master/example/screenshot.png)
