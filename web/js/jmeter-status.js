@@ -98,13 +98,33 @@ function initStatusChart(containerId, dataContainId, data){
         ],
         series : [
             {
+                name: 'Count',
+                type: 'bar',
+                barGap: '-100%',
+                itemStyle: {
+                    normal: {
+                        color: '#dcdcdc'
+                    }
+                },
+                data: data.counts
+            },
+            {
+                name: 'ErrCount',
+                type: 'bar',
+                itemStyle: {
+                    normal: {
+                        color: '#dc3545'
+                    }
+                },
+                data: data.errCounts
+            },
+            {
                 name: 'ErrRate',
                 type: 'line',
-                stack: 'count',
                 data: data.errRates,
                 itemStyle: {
-                    normal:{
-                        color:'#dc3545'
+                    normal: {
+                        color: '#fd7e14'
                     }
                 },
                 markPoint : {
@@ -118,28 +138,6 @@ function initStatusChart(containerId, dataContainId, data){
                         {type : 'average', name: 'Average'}
                     ]
                 }
-            },
-            {
-                name: 'ErrCount',
-                type: 'bar',
-                stack: 'count',
-                itemStyle: {
-                    normal:{
-                        color:'#dc3545'
-                    }
-                },
-                data: data.errCounts
-            },
-            {
-                name: 'Count',
-                type: 'bar',
-                stack: 'count',
-                itemStyle: {
-                    normal:{
-                        color:'#dcdcdc'
-                    }
-                },
-                data: data.counts
             }
         ]
     }
