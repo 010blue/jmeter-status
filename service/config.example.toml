@@ -1,0 +1,18 @@
+# JMeter Status service config
+
+title = "service config"
+
+# fetch data to where
+datapath = "../web/data/" # default "../web/data/", must end by "/"
+# show how many rows
+rows = 24
+
+#  array, JMeter jtl list website addresses
+[[websites]]
+name = "First"
+URL = "https://example.com/jmeter/" # must end by "/"
+
+[[websites]]
+name = "Second"
+URL = "https://example.com/jmeter/" # must end by "/"
+authorization = "Basic ***" # for 401 authorization string

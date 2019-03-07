@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="./node_modules/bootstrap/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="./node_modules/tablesorter/dist/css/theme.blue.min.css">
+    <style>
+        header.fixed-top, #status-container, #apis-container {
+            margin: 0 auto;
+            padding: 0 30px;
+            width: 100%;
+            max-width: 100%;
+            overflow: hidden;
+            height: auto;
+        }
+
+        #status-container {
+            margin-top: 40px;
+            min-height: 360px;
+        }
+
+        #apis-container table tbody td {
+            font-size: 12px;
+        }
+
+        #websites {
+            width: 100px
+        }
+    </style>
+</head>
+<body>
+    <header id="header" class="fixed-top container">
+        <div class="float-left">
+            <select id="websites" class="form-control form-control-sm">
+                <option>websites</option>
+            </select>
+        </div>
+    </header>
+    <div id="status-container"></div>
+    <div id="apis-container"></div>
+    <script src="./node_modules/jquery/dist/jquery.min.js"></script>
+    <script src="./node_modules/echarts/dist/echarts.js"></script>
+    <script src="./node_modules/tablesorter/dist/js/jquery.tablesorter.min.js"></script>
+    <script src="./js/jmeter-status.js"></script>
+    <script>
+    var websites;
+    var defaultWebsite = localStorage.getItem("default");
+    if(defaultWebsite == null) defaultWebsite=0;
+    var dataURL = './data/default.json';
+    $.getJSON(dataURL, function(re){
+        if(re != null && re.websites!=undefined && re.websites.length > 0){
+            websites = re.websites;
+            var defaultNum = defaultWebsite ? defaultWebsite : re.default;
+            var website = websites[defaultNum];
+            // init websites select
+            $("#websites").html("");
+            $(websites).each(function(k,v){
+                $("#websites").append('<option value="'+ k +'">'+ v.name +'</option>');
+            });
+            $("#websites").unbind();
+            $("#websites").change(function(){
+                defaultWebsite = $(this).val();
+                localStorage.setItem("default", defaultWebsite);
+                init(websites[defaultWebsite]);
+            });
+            $("#websites").val(defaultNum);
+            init(website);
+        }
+    });
+
+    function init(website){
+        var times=[],errRates=[],counts=[],errCounts=[],files=[];
+
+        $("#status-container,apis-container").html("");
+        // init status chart
+        $(website.data).each(function(k,v){
+            times.push(timestamp2date(v.timestamp));
+            counts.push(v.count);
+            errCounts.push(v.errCount);
+            errRates.push(v.errRate);
+            files.push(v.file);
+        });
+
+        initStatusChart('status-container', 'apis-container', {
+            "times":times,
+            "counts":counts,
+            "errRates":errRates,
+            "errCounts":errCounts,
+            "files":files
+        });
+    }
+    </script>
+</body>
+</html>
