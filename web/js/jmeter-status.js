@@ -44,13 +44,12 @@ function initStatusChart(containerId, dataContainId, data){
                     var success = columns[7];
                     if(rowK>0) timeStamp = timestamp2date(timeStamp);
                     html += '<tr>';
-                    html += '<td>' + label +'</td>';
-                    html += '<td>' + timeStamp +'</td>';
-                    html += '<td>' + columns[1] +' ms</td>';
-                    html += '<td>' + columns[3] +'</td>';
-                    html += '<td' +(success=='false' ? ' class="text-danger font-weight-bold"' : '')+ '>' + success +'</td>';
-                    html += '<td>' + columns[8] +'</td>';
-
+                    html += '<td>' + htmlEntities(label) +'</td>';
+                    html += '<td>' + htmlEntities(timeStamp) +'</td>';
+                    html += '<td>' + htmlEntities(columns[1]) +' ms</td>';
+                    html += '<td>' + htmlEntities(columns[3]) +'</td>';
+                    html += '<td' +(success=='false' ? ' class="text-danger font-weight-bold"' : '')+ '>' + htmlEntities(success) +'</td>';
+                    html += '<td>' + htmlEntities(columns[8]) +'</td>';
                     html += '</tr>';
                 }
             });
@@ -159,3 +158,17 @@ function timestamp2date(timestamp){
     var second = datetime.getSeconds()< 10 ? "0" + datetime.getSeconds() : datetime.getSeconds();
     return month + "/" + date + " " + hour + ":" + minute;
 }
+
+function htmlEntities(str) {
+    var entitys = {
+        '&' : '&amp;',
+        '<' : '&lt;',
+        '>' : '&gt;',
+        '"' : '&quot;',
+        "'" : '&apos;'
+    };
+    var regexp = new RegExp ('['+Object.keys(entitys).join('')+']','g');
+    return str.replace(regexp,function(matched){
+        return entitys[matched];
+    });
+} 
