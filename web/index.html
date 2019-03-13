@@ -5,7 +5,7 @@
     <link rel="stylesheet" href="./node_modules/bootstrap/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="./node_modules/tablesorter/dist/css/theme.blue.min.css">
     <style>
-        header.fixed-top, #status-container, #apis-container {
+        header.container, #status-container, #apis-container {
             margin: 0 auto;
             padding: 0 30px;
             width: 100%;
@@ -14,8 +14,11 @@
             height: auto;
         }
 
+        header.container {
+            padding-top: 5px;
+        }
         #status-container {
-            margin-top: 40px;
+            margin-top: 10px;
             min-height: 360px;
         }
 
@@ -24,17 +27,26 @@
         }
 
         #websites {
-            width: 100px
+            width: 120px
+        }
+
+        .navbar-nav .nav-item {
+            padding-right: 5px;
         }
     </style>
 </head>
 <body>
-    <header id="header" class="fixed-top container">
-        <div class="float-left">
-            <select id="websites" class="form-control form-control-sm">
-                <option>websites</option>
-            </select>
-        </div>
+    <header id="header" class="container">
+        <ul class="navbar-nav flex-row">
+            <li class="nav-item">
+                <select id="websites" class="form-control form-control-sm">
+                    <option>websites</option>
+                </select>
+            </li>
+            <li class="nav-item">
+                <a class="btn btn-outline-secondary btn-sm" href="./">Refresh</a>
+            </li>
+        </ul>
     </header>
     <div id="status-container"></div>
     <div id="apis-container"></div>
