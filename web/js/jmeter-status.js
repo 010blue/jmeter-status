@@ -160,6 +160,7 @@ function timestamp2date(timestamp){
 }
 
 function htmlEntities(str) {
+    if(str == undefined || str == null || str == "") return "";
     var entitys = {
         '&' : '&amp;',
         '<' : '&lt;',
