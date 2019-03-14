@@ -14,7 +14,7 @@ function initStatusChart(containerId, dataContainId, data){
     window.chart.on("click",function(params){
         // load API data
         var file = data.files[params.dataIndex];
-        // use papapase to get and parse data
+        // use papaparse to get and parse data
         Papa.parse(window.dataPath + file, {
             download: true,
             complete: function(fileData) {
