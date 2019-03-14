@@ -13,50 +13,53 @@ function initStatusChart(containerId, dataContainId, data){
     window.chart = echarts.init(document.getElementById(containerId));
     window.chart.on("click",function(params){
         // load API data
-        var file = data.files[params.dataIndex]
-        $.get(window.dataPath + file,function(fileData){
-            var html = '<table class="table table-sm table-hover tablesorter-blue">';
-            var rows = fileData.split("\n");
-            // only show some column
-            /**
-             * timeStamp 0
-             * elapsed 1
-             * label 2
-             * responseCode 3
-             * success 7
-             * failureMessage 8
-             */
-            // head
-            html += '<thead><tr>';
-            html += '<th>label</th>';
-            html += '<th>timeStamp</th>';
-            html += '<th>elapsed</th>';
-            html += '<th>responseCode</th>';
-            html += '<th>success</th>';
-            html += '<th>failureMessage</th>';
-            html += '</tr></thead>';
-            html += '<tbody>';
-            $(rows).each(function(rowK, row){
-                if(rowK > 0 && row != "") {
-                    var columns = row.split(",");
-                    var label = columns[2];
-                    var timeStamp = columns[0];
-                    var success = columns[7];
-                    if(rowK>0) timeStamp = timestamp2date(timeStamp);
-                    html += '<tr>';
-                    html += '<td>' + htmlEntities(label) +'</td>';
-                    html += '<td>' + htmlEntities(timeStamp) +'</td>';
-                    html += '<td>' + htmlEntities(columns[1]) +' ms</td>';
-                    html += '<td>' + htmlEntities(columns[3]) +'</td>';
-                    html += '<td' +(success=='false' ? ' class="text-danger font-weight-bold"' : '')+ '>' + htmlEntities(success) +'</td>';
-                    html += '<td>' + htmlEntities(columns[8]) +'</td>';
-                    html += '</tr>';
-                }
-            });
-            html += '</tbody></table>';
+        var file = data.files[params.dataIndex];
+        // use papapase to get and parse data
+        Papa.parse(window.dataPath + file, {
+            download: true,
+            complete: function(fileData) {
+                var rows = fileData.data;
+                // only show some column
+                /**
+                 * timeStamp 0
+                 * elapsed 1
+                 * label 2
+                 * responseCode 3
+                 * success 7
+                 * failureMessage 8
+                 */
+                var html = '<table class="table table-sm table-hover tablesorter-blue">';
+                // head
+                html += '<thead><tr>';
+                html += '<th>label</th>';
+                html += '<th>timeStamp</th>';
+                html += '<th>elapsed</th>';
+                html += '<th>responseCode</th>';
+                html += '<th>success</th>';
+                html += '<th>failureMessage</th>';
+                html += '</tr></thead>';
+                html += '<tbody>';
+                $(rows).each(function(rowK, columns){
+                    if(rowK > 0 && columns != null && columns.length > 8) {
+                        var label = columns[2];
+                        var timeStamp = columns[0];
+                        var success = columns[7];
+                        if(rowK>0) timeStamp = timestamp2date(timeStamp);
+                        html += '<tr>';
+                        html += '<td>' + htmlEntities(label) +'</td>';
+                        html += '<td>' + htmlEntities(timeStamp) +'</td>';
+                        html += '<td>' + htmlEntities(columns[1]) +' ms</td>';
+                        html += '<td>' + htmlEntities(columns[3]) +'</td>';
+                        html += '<td' +(success=='false' ? ' class="text-danger font-weight-bold"' : '')+ '>' + htmlEntities(success) +'</td>';
+                        html += '<td>' + htmlEntities(columns[8]) +'</td>';
+                        html += '</tr>';
+                    }
+                });
+                html += '</tbody></table>';
 
-            $("#" + dataContainId).html(html);
-            $("#" + dataContainId+" table").tablesorter();
+                $("#" + dataContainId).html(html);
+                $("#" + dataContainId+" table").tablesorter();
+            }
         });
     });
     var option= {
