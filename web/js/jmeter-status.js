@@ -68,10 +68,11 @@ function initStatusChart(containerId, dataContainId, data){
             subtext: 'JMeter'
         },
         tooltip : {
-            trigger: 'axis'
+            trigger: 'axis',
+            formatter: 'Error: {c1}<br />Count: {c0}<br />ErrRate: {c2}%'
         },
         legend: {
-            data:['ErrRate', 'ErrCount', 'Count']
+            data:['Error', 'Count', 'Error Rate']
         },
         toolbox: {
             show : true,
@@ -92,9 +93,18 @@ function initStatusChart(containerId, dataContainId, data){
         ],
         yAxis : [
             {
+                name : 'Count',
                 type : 'value',
                 axisLabel : {
                     margin: 30
+                }
+            },
+            {
+                name : 'Error Rate',
+                type : 'value',
+                axisLabel : {
+                    margin : 30,
+                    formatter: '{value} %'
                 }
             }
         ],
@@ -111,7 +121,7 @@ function initStatusChart(containerId, dataContainId, data){
                 data: data.counts
             },
             {
-                name: 'ErrCount',
+                name: 'Error',
                 type: 'bar',
                 itemStyle: {
                     normal: {
@@ -121,9 +131,10 @@ function initStatusChart(containerId, dataContainId, data){
                 data: data.errCounts
             },
             {
-                name: 'ErrRate',
+                name: 'Error Rate',
                 type: 'line',
                 data: data.errRates,
+                yAxisIndex: 1,
                 itemStyle: {
                     normal: {
                         color: '#fd7e14'
