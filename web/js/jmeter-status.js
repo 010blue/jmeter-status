@@ -95,14 +95,14 @@ function initStatusChart(containerId, dataContainId, data){
                 name : 'Count',
                 type : 'value',
                 axisLabel : {
-                    margin: 30
+                    margin: 20
                 }
             },
             {
                 name : 'Error Rate',
                 type : 'value',
                 axisLabel : {
-                    margin : 30,
+                    margin : 20,
                     formatter: '{value} %'
                 }
             }
