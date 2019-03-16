@@ -84,7 +84,6 @@ function initStatusChart(containerId, dataContainId, data){
         xAxis : [
             {
                 type : 'category',
-                boundaryGap : false,
                 data : data.times,
                 axisLabel: {
                     rotate: 45
