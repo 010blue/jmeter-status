@@ -4,8 +4,15 @@
  * @param {*} data 
  */
 window.dataPath = "./data/";
+window.dataURL = window.dataPath + 'default.json';
 window.chart;
 
+/**
+ * initialize chart
+ * @param {*} containerId 
+ * @param {*} dataContainId 
+ * @param {*} data 
+ */
 function initStatusChart(containerId, dataContainId, data){
     if(window.chart != null || window.chart != undefined){
         window.chart.dispose();
@@ -157,6 +164,62 @@ function initStatusChart(containerId, dataContainId, data){
 }
 
 /**
+ * initialize data for chart
+ * @param {*} website 
+ */
+function initData(website){
+    var times=[],errRates=[],counts=[],errCounts=[],files=[];
+
+    $("#status-container,#apis-container").html("");
+    // init status chart
+    $(website.data).each(function(k,v){
+        times.push(timestamp2date(v.timestamp));
+        counts.push(v.count);
+        errCounts.push(v.errCount);
+        errRates.push(v.errRate);
+        files.push(v.file);
+    });
+
+    initStatusChart('status-container', 'apis-container', {
+        "times":times,
+        "counts":counts,
+        "errRates":errRates,
+        "errCounts":errCounts,
+        "files":files
+    });
+}
+
+/**
+ * init all
+ */
+function init(){
+    var websites;
+    var defaultWebsite = localStorage.getItem("default");
+    if(defaultWebsite == null) defaultWebsite=0;
+
+    $.getJSON(dataURL, function(re){
+        if(re != null && re.websites!=undefined && re.websites.length > 0){
+            websites = re.websites;
+            var defaultNum = defaultWebsite ? defaultWebsite : re.default;
+            var website = websites[defaultNum];
+            // init websites select
+            $("#websites").html("");
+            $(websites).each(function(k,v){
+                $("#websites").append('<option value="'+ k +'">'+ v.name +'</option>');
+            });
+            $("#websites").unbind();
+            $("#websites").change(function(){
+                defaultWebsite = $(this).val();
+                localStorage.setItem("default", defaultWebsite);
+                initData(websites[defaultWebsite]);
+            });
+            $("#websites").val(defaultNum);
+            initData(website);
+        }
+    });
+}
+
+/**
  * timestamp to date string
  * @param {*} timestamp 
  */
@@ -172,6 +235,10 @@ function timestamp2date(timestamp){
     return month + "/" + date + " " + hour + ":" + minute;
 }
 
+/**
+ * tranfer html to entities
+ * @param {*} str 
+ */
 function htmlEntities(str) {
     if(str == undefined || str == null || str == "") return "";
     var entitys = {

@@ -46,7 +46,7 @@
                 </select>
             </li>
             <li class="nav-item">
-                <a class="btn btn-outline-secondary btn-sm" href="./">Refresh</a>
+                <button class="btn btn-outline-secondary btn-sm btn-refresh">Refresh</button>
             </li>
         </ul>
     </header>
@@ -58,52 +58,11 @@
     <script src="./node_modules/papaparse/papaparse.min.js"></script>
     <script src="./js/jmeter-status.js"></script>
     <script>
-    var websites;
-    var defaultWebsite = localStorage.getItem("default");
-    if(defaultWebsite == null) defaultWebsite=0;
-    var dataURL = './data/default.json';
-    $.getJSON(dataURL, function(re){
-        if(re != null && re.websites!=undefined && re.websites.length > 0){
-            websites = re.websites;
-            var defaultNum = defaultWebsite ? defaultWebsite : re.default;
-            var website = websites[defaultNum];
-            // init websites select
-            $("#websites").html("");
-            $(websites).each(function(k,v){
-                $("#websites").append('<option value="'+ k +'">'+ v.name +'</option>');
-            });
-            $("#websites").unbind();
-            $("#websites").change(function(){
-                defaultWebsite = $(this).val();
-                localStorage.setItem("default", defaultWebsite);
-                init(websites[defaultWebsite]);
-            });
-            $("#websites").val(defaultNum);
-            init(website);
-        }
+    $(".btn-refresh").click(function(){
+        init();
     });
 
-    function init(website){
-        var times=[],errRates=[],counts=[],errCounts=[],files=[];
-
-        $("#status-container,#apis-container").html("");
-        // init status chart
-        $(website.data).each(function(k,v){
-            times.push(timestamp2date(v.timestamp));
-            counts.push(v.count);
-            errCounts.push(v.errCount);
-            errRates.push(v.errRate);
-            files.push(v.file);
-        });
-
-        initStatusChart('status-container', 'apis-container', {
-            "times":times,
-            "counts":counts,
-            "errRates":errRates,
-            "errCounts":errCounts,
-            "files":files
-        });
-    }
+    init();
     </script>
 </body>
 </html>
