@@ -1,17 +1,15 @@
 /**
  * config & init chart
- * @param {*} containerId 
- * @param {*} data 
  */
 window.dataPath = "./data/";
-window.dataURL = window.dataPath + 'default.json';
+window.dataURL = window.dataPath + "today.json";
 window.chart;
 
 /**
  * initialize chart
- * @param {*} containerId 
- * @param {*} dataContainId 
- * @param {*} data 
+ * @param string containerId 
+ * @param string dataContainId 
+ * @param object data 
  */
 function initStatusChart(containerId, dataContainId, data){
     if(window.chart != null || window.chart != undefined){
@@ -21,6 +19,7 @@ function initStatusChart(containerId, dataContainId, data){
     window.chart.on("click",function(params){
         // load API data
         var file = data.files[params.dataIndex];
+        if (file == undefined || file == null) return;
         // use papaparse to get and parse data
         Papa.parse(window.dataPath + file, {
             download: true,
@@ -167,16 +166,23 @@ function initStatusChart(containerId, dataContainId, data){
  * initialize data for chart
  * @param {*} website 
  */
-function initData(website){
+function initData(website, statusType){
     var times=[],errRates=[],counts=[],errCounts=[],files=[];
 
     $("#status-container,#apis-container").html("");
     // init status chart
-    $(website.data).each(function(k,v){
-        times.push(timestamp2date(v.timestamp));
+    var data;
+    if (statusType == "today" || statusType == undefined || statusType == null) {
+        statusType = "today";
+        data = website.data;
+    } else {
+        data = website.days;
+    }
+    $(data).each(function(k,v){
+        times.push(statusType == "today" ? UTC2Local(v.executed_at) : v.date);
         counts.push(v.count);
-        errCounts.push(v.errCount);
-        errRates.push(v.errRate);
+        errCounts.push(v.err_count);
+        errRates.push(v.err_rate);
         files.push(v.file);
     });
 
@@ -192,12 +198,25 @@ function initData(website){
 /**
  * init all
  */
-function init(){
+function init(statusType){
     var websites;
-    var defaultWebsite = localStorage.getItem("default");
+    var defaultWebsite = localStorage.getItem("website");
     if(defaultWebsite == null) defaultWebsite=0;
 
-    $.getJSON(dataURL, function(re){
+    switch(statusType){
+        case "week":
+            window.dataURL = window.dataPath + "week.json";
+            break;
+        case "month":
+            window.dataURL = window.dataPath + "month.json";
+            break;
+        case "today":
+        default:
+            window.dataURL = window.dataPath + "today.json";
+            break;
+    }
+
+    $.getJSON(window.dataURL, function(re){
         if(re != null && re.websites!=undefined && re.websites.length > 0){
             websites = re.websites;
             var defaultNum = defaultWebsite ? defaultWebsite : re.default;
@@ -210,18 +229,18 @@ function init(){
             $("#websites").unbind();
             $("#websites").change(function(){
                 defaultWebsite = $(this).val();
-                localStorage.setItem("default", defaultWebsite);
-                initData(websites[defaultWebsite]);
+                localStorage.setItem("website", defaultWebsite);
+                initData(websites[defaultWebsite], statusType);
             });
             $("#websites").val(defaultNum);
-            initData(website);
+            initData(website, statusType);
         }
     });
 }
 
 /**
  * timestamp to date string
- * @param {*} timestamp 
+ * @param string timestamp 
  */
 function timestamp2date(timestamp){
     var datetime = new Date();
@@ -236,8 +255,30 @@ function timestamp2date(timestamp){
 }
 
 /**
+ * UTC2Local
+ * @param string UTCDateString 
+ */
+function UTC2Local(UTCDateString) {
+    if(!UTCDateString) {
+      return '-';
+    }
+    function formatFunc(str) {
+      return str > 9 ? str : '0' + str
+    }
+    var date2 = new Date(UTCDateString);
+    var year = date2.getFullYear();
+    var mon = formatFunc(date2.getMonth() + 1);
+    var day = formatFunc(date2.getDate());
+    var hour = date2.getHours();
+    hour = formatFunc(hour);
+    var min = formatFunc(date2.getMinutes());
+    var dateStr = mon+'/'+day+' '+hour+':'+min;
+    return dateStr;
+}
+
+/**
  * tranfer html to entities
- * @param {*} str 
+ * @param string str 
  */
 function htmlEntities(str) {
     if(str == undefined || str == null || str == "") return "";

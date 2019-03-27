@@ -2,17 +2,24 @@
 
 title = "service config"
 
+# mysql config
+[mysql]
+dsn = "user:password@tcp(localhost:3306)/dbname?parseTime=true"  # parseTime=true need to be retained
+
 # fetch data to where
 datapath = "../web/data/" # default "../web/data/", must end by "/"
-# show how many rows
+# fetch default max rows
 rows = 24
 
 #  array, JMeter jtl list website addresses
 [[websites]]
+id = 1 # must exist, unique
 name = "First"
 URL = "https://example.com/jmeter/" # must end by "/"
 
 [[websites]]
+id = 2 # must exist, unique
 name = "Second"
 URL = "https://example.com/jmeter/" # must end by "/"
-authorization = "Basic ***" # for 401 authorization string
+auth_user = "test" # for 401 Authentication
+auth_password = "test"  # for 401 Authentication

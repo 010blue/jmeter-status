@@ -39,6 +39,11 @@
 </head>
 <body>
     <header id="header" class="container">
+        <div class="btn-group-types btn-group btn-group-sm float-right" role="group">
+            <button data-type="today" class="btn btn-secondary active">Today</button>
+            <button data-type="week" class="btn btn-secondary">Week</button>
+            <button data-type="month" class="btn btn-secondary">Month</button>
+        </div>
         <ul class="navbar-nav flex-row">
             <li class="nav-item">
                 <select id="websites" class="form-control form-control-sm">
@@ -60,6 +65,14 @@
     <script>
     $(".btn-refresh").click(function(){
         init();
+    });
+
+    $(".btn-group-types button").click(function(){
+        $(".btn-group-types button").removeClass("active");
+        var type = $(this).attr("data-type");
+        localStorage.setItem("statusType", type);
+        $(this).addClass("active");
+        init($(this).attr("data-type"));
     });
 
     init();

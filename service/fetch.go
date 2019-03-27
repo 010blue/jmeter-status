@@ -1,27 +1,21 @@
 package main
 
 import (
+	"encoding/base64"
 	"encoding/csv"
 	"encoding/json"
-	"fmt"
-	"github.com/BurntSushi/toml"
+	config "github.com/010blue/jmeter-status/service/config"
 	"github.com/PuerkitoBio/goquery"
+	"github.com/jinzhu/now"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
-
-type status struct {
-	Timestamp string `json:"timestamp"`
-	Count     int    `json:"count"`
-	ErrCount  int    `json:"errCount"`
-	ErrRate   int    `json:"errRate"`
-	File      string `json:"file"`
-}
 
 // Jtl file content
 // type apirequest struct {
@@ -51,31 +45,14 @@ type status struct {
 // }
 
 var dataContainer container
-var itemsLen = 24 // only show 2 lastest items
-var configFile = "./config.toml"
+var itemsLen = 50 // only 50 lastest items
 var cacheDataPath = "../web/data/"
-var config tomlConfig
-
-// JMeter website
-type website struct {
-	Name          string   `json:"name"`
-	URL           string   `json:"url"`
-	Authorization string   // for 401
-	Data          []status `json:"data"`
-}
-
-// toml config
-type tomlConfig struct {
-	Title    string
-	Websites []website
-	Datapath string
-	Rows     int
-}
+var tomlConfig *config.TomlConfig
 
 // data container
 type container struct {
-	Websites []website `json:"websites"`
-	Default  int       `json:"default"`
+	Websites []config.Website `json:"websites"`
+	Default  int              `json:"default"`
 }
 
 // judge file exists
@@ -88,41 +65,187 @@ func fileExist(file string) bool {
 }
 
 // get content with authorization or not
-func requestWithAuthorization(url string, authorization string) (response *http.Response, err error) {
+func requestWithAuthorization(url string, authUser string, authPassword string) (response *http.Response, err error) {
 	client := &http.Client{}
 	request, _ := http.NewRequest("GET", url, nil)
-	if authorization != "" {
-		request.Header.Add("Authorization", authorization)
+	if authUser != "" {
+		authorization := []byte(authUser + ":" + authPassword)
+		request.Header.Add("Authorization", "Basic "+base64.StdEncoding.EncodeToString(authorization))
 	}
 	return client.Do(request)
+}
+
+// get day tasks from DB
+func getDayTasks(date string, websiteID int, tomlConfig *config.TomlConfig) (tasks []config.Task, err error) {
+	beginTime, _ := now.Parse(date)
+	beginTime = beginTime.UTC()
+	endTime := beginTime.AddDate(0, 0, 1)
+
+	// get tasks from DB
+	db := config.InitDB(tomlConfig)
+	defer db.Close()
+
+	rows, err := db.Query("SELECT id,website_id,file,api_count,api_error_count,api_error_rate,executed_at FROM tasks WHERE website_id=? AND executed_at>=? AND executed_at<?", websiteID, beginTime, endTime)
+
+	if err != nil {
+		return tasks, err
+	}
+
+	for rows.Next() {
+		var id int
+		var websiteID int
+		var file string
+		var apiCount int
+		var apiErrorCount int
+		var apiErrorRate float32
+		var executedAt time.Time
+		if rowErr := rows.Scan(&id, &websiteID, &file, &apiCount, &apiErrorCount, &apiErrorRate, &executedAt); rowErr != nil {
+			log.Println(rowErr)
+		}
+
+		task := config.Task{
+			ID:         id,
+			WebsiteID:  websiteID,
+			ExecutedAt: executedAt,
+			Count:      apiCount,
+			ErrCount:   apiErrorCount,
+			ErrRate:    apiErrorRate,
+			File:       file,
+		}
+
+		tasks = append(tasks, task)
+	}
+
+	return tasks, err
+}
+
+// get day's status data
+func getDayStatus(date string, websiteID int, tomlConfig *config.TomlConfig) (dayStatus config.DayStatus, err error) {
+	// get tasks from DB
+	db := config.InitDB(tomlConfig)
+	defer db.Close()
+
+	tasks, err := getDayTasks(date, websiteID, tomlConfig)
+	if err != nil {
+		return dayStatus, err
+	}
+
+	count := 1
+	errCount := 0
+	for _, task := range tasks {
+		count += task.Count
+		errCount += task.ErrCount
+	}
+	errRate := float32(100 * errCount / count)
+
+	dayStatus = config.DayStatus{
+		Date:     date,
+		Count:    count,
+		ErrCount: errCount,
+		ErrRate:  errRate,
+	}
+
+	return dayStatus, err
+}
+
+// generate json for today
+func generateTodayStatus(dataContainer *container, tomlConfig *config.TomlConfig) (err error) {
+	todayDate := time.Now().UTC().Format("2006-01-02")
+	// find tasks
+	for k, website := range dataContainer.Websites {
+		dataContainer.Websites[k].Days = []config.DayStatus{}
+		dataContainer.Websites[k].Data, err = getDayTasks(todayDate, website.ID, tomlConfig)
+	}
+
+	containerJSON, _ := json.Marshal(dataContainer)
+	// save data to file
+	ioutil.WriteFile(cacheDataPath+"today.json", containerJSON, 0644)
+
+	return err
+}
+
+func generateWeekStatus(dataContainer *container, tomlConfig *config.TomlConfig) (err error) {
+	beginTime := now.BeginningOfWeek()
+	endTime := now.EndOfWeek()
+
+	// find day status
+	for k, website := range dataContainer.Websites {
+		statuses := []config.DayStatus{}
+		for i := 0; i < 7; i++ {
+			dateTime := beginTime.AddDate(0, 0, i)
+			if dateTime.Unix() >= endTime.Unix() {
+				break
+			}
+			date := dateTime.Format("2006-01-02")
+			status, _ := getDayStatus(date, website.ID, tomlConfig)
+			statuses = append(statuses, status)
+		}
+
+		dataContainer.Websites[k].Data = []config.Task{}
+		dataContainer.Websites[k].Days = statuses
+	}
+
+	containerJSON, _ := json.Marshal(dataContainer)
+	// save data to file
+	ioutil.WriteFile(cacheDataPath+"week.json", containerJSON, 0644)
+
+	return err
+}
+
+func generateMonthStatus(dataContainer *container, tomlConfig *config.TomlConfig) (err error) {
+	beginTime := now.BeginningOfMonth()
+	endTime := now.EndOfMonth()
+
+	// find day status
+	for k, website := range dataContainer.Websites {
+		statuses := []config.DayStatus{}
+		for i := 0; i < 31; i++ {
+			dateTime := beginTime.AddDate(0, 0, i)
+			if dateTime.Unix() >= endTime.Unix() {
+				break
+			}
+			date := dateTime.Format("2006-01-02")
+			status, _ := getDayStatus(date, website.ID, tomlConfig)
+			statuses = append(statuses, status)
+		}
+
+		dataContainer.Websites[k].Data = []config.Task{}
+		dataContainer.Websites[k].Days = statuses
+	}
+
+	containerJSON, _ := json.Marshal(dataContainer)
+	// save data to file
+	ioutil.WriteFile(cacheDataPath+"month.json", containerJSON, 0644)
+
+	return err
 }
 
 func main() {
 	// config
 	dataContainer := new(container)
 
-	_, configErr := toml.DecodeFile(configFile, &config)
+	tomlConfig, configErr := config.InitConfig()
 	if configErr != nil {
 		log.Fatal(configErr)
 	}
 
-	dataContainer.Websites = config.Websites
+	dataContainer.Websites = tomlConfig.Websites
 	dataContainer.Default = 0
-	if config.Rows > 0 {
-		itemsLen = config.Rows
+	if tomlConfig.Rows > 0 {
+		itemsLen = tomlConfig.Rows
 	}
 
-	if config.Datapath != "" {
-		cacheDataPath = config.Datapath
+	if tomlConfig.Datapath != "" {
+		cacheDataPath = tomlConfig.Datapath
 	}
 
 	// /config
 	// fetch JMeter by index page
 	for websiteK, website := range dataContainer.Websites {
-		fmt.Println(time.Now().String() + ": " + website.Name + " fetching")
+		log.Println(website.Name + " fetching")
 
 		rootPath := website.URL
-		indexRes, indexErr := requestWithAuthorization(rootPath, website.Authorization)
+		indexRes, indexErr := requestWithAuthorization(rootPath, website.AuthUser, website.AuthPassword)
 
 		if indexErr != nil {
 			log.Fatal(indexErr)
@@ -143,7 +266,7 @@ func main() {
 		})
 
 		// Parse data
-		statuses := []status{}
+		tasks := []config.Task{}
 
 		linksLen := len(links)
 
@@ -152,24 +275,25 @@ func main() {
 		}
 
 		for _, link := range links {
-			linkAPIStatus := status{
-				Timestamp: "",
-				Count:     0,
-				ErrCount:  0,
-				ErrRate:   0,
-				File:      "",
+			apiTask := config.Task{
+				WebsiteID:  website.ID,
+				ExecutedAt: time.Now().UTC(),
+				Count:      0,
+				ErrCount:   0,
+				ErrRate:    0,
+				File:       "",
 			}
 
-			linkAPIStatus.File = link
+			apiTask.File = link
 			var linkContent []byte
 			var linkContentErr error
 			// if file exists in cache, read cache or request remote
-			if fileExist("./cache/" + linkAPIStatus.File) {
-				linkContent, linkContentErr = ioutil.ReadFile(cacheDataPath + linkAPIStatus.File)
+			if fileExist(cacheDataPath + apiTask.File) {
+				linkContent, linkContentErr = ioutil.ReadFile(cacheDataPath + apiTask.File)
 			}
 			if linkContent == nil {
 				// get content by remote
-				linkRes, linkErr := requestWithAuthorization(rootPath+"/"+linkAPIStatus.File, website.Authorization)
+				linkRes, linkErr := requestWithAuthorization(rootPath+"/"+apiTask.File, website.AuthUser, website.AuthPassword)
 				if linkErr != nil {
 					continue
 				}
@@ -178,15 +302,15 @@ func main() {
 					continue
 				}
 				// cache content
-				ioutil.WriteFile(cacheDataPath+linkAPIStatus.File, linkContent, 0644)
+				ioutil.WriteFile(cacheDataPath+apiTask.File, linkContent, 0644)
 			}
 
 			content := string(linkContent)
 			csvReader := csv.NewReader(strings.NewReader(content))
 
 			// count error rate
-			linkAPIStatus.Count = 0
-			linkAPIStatus.ErrCount = 0
+			apiTask.Count = 0
+			apiTask.ErrCount = 0
 			i := 0
 			for {
 				csvRow, csvRowErr := csvReader.Read()
@@ -203,30 +327,39 @@ func main() {
 				if i == 1 {
 					continue
 				} else if i == 2 {
+					timestamp, timestampErr := strconv.Atoi(csvRow[0])
+					createdAt := time.Now().UTC()
+					if timestampErr == nil {
+						createdAt = time.Unix(int64(timestamp/1000), 0).UTC()
+					}
 					// time default from the first row's timestamp
-					linkAPIStatus.Timestamp = csvRow[0]
+					apiTask.ExecutedAt = createdAt
 				}
 
-				linkAPIStatus.Count++
+				apiTask.Count++
 
 				success := csvRow[7]
 				if success != "true" {
-					linkAPIStatus.ErrCount++
+					apiTask.ErrCount++
 				}
 			}
 
-			if linkAPIStatus.Count == 0 {
-				linkAPIStatus.Count = 1
+			if apiTask.Count == 0 {
+				apiTask.Count = 1
 			}
 
-			linkAPIStatus.ErrRate = 100 * linkAPIStatus.ErrCount / linkAPIStatus.Count
-			statuses = append(statuses, linkAPIStatus)
+			apiTask.ErrRate = float32(100 * apiTask.ErrCount / apiTask.Count)
+
+			// Store to db
+			config.SyncTaskToDB(&apiTask, tomlConfig)
+			tasks = append(tasks, apiTask)
 		}
 
-		dataContainer.Websites[websiteK].Data = statuses
-		fmt.Println(time.Now().String() + ": " + website.Name + " fetched")
+		dataContainer.Websites[websiteK].Data = tasks
+		log.Println(website.Name + " fetched")
 	}
-	containerJSON, _ := json.Marshal(dataContainer)
-	// save data to file
-	ioutil.WriteFile(cacheDataPath+"default.json", containerJSON, 0644)
+
+	generateTodayStatus(dataContainer, tomlConfig)
+	generateWeekStatus(dataContainer, tomlConfig)
+	generateMonthStatus(dataContainer, tomlConfig)
 }
