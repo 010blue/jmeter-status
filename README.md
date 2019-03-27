@@ -11,6 +11,10 @@
     cd service
     mv config.example.toml config.toml
     vi config.toml # change to your own information
+    # for mysql
+    create database dbname
+    execute config/db.sql to mysql database
+    
 
 ## fetch data
     cd service
