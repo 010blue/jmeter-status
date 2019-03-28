@@ -64,7 +64,8 @@
     <script src="./js/jmeter-status.js"></script>
     <script>
     $(".btn-refresh").click(function(){
-        init();
+        var statusType = localStorage.getItem("statusType")
+        init(statusType);
     });
 
     $(".btn-group-types button").click(function(){
