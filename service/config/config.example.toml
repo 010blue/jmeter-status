@@ -2,14 +2,14 @@
 
 title = "service config"
 
-# mysql config
-[mysql]
-dsn = "user:password@tcp(localhost:3306)/dbname?parseTime=true"  # parseTime=true need to be retained
-
 # fetch data to where
 datapath = "../web/data/" # default "../web/data/", must end by "/"
 # fetch default max rows
 rows = 24
+
+# mysql config
+[mysql]
+dsn = "user:password@tcp(localhost:3306)/dbname?parseTime=true"  # parseTime=true need to be retained
 
 #  array, JMeter jtl list website addresses
 [[websites]]
