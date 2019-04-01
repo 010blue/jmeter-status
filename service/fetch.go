@@ -150,7 +150,7 @@ func getDayStatus(date string, websiteID int, tomlConfig *config.TomlConfig) (da
 
 // generate json for today
 func generateTodayStatus(dataContainer *container, tomlConfig *config.TomlConfig) (err error) {
-	todayDate := time.Now().UTC().Format("2006-01-02")
+	todayDate := time.Now().Format("2006-01-02")
 	// find tasks
 	for k, website := range dataContainer.Websites {
 		dataContainer.Websites[k].Days = []config.DayStatus{}
