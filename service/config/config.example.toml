@@ -13,7 +13,7 @@ dsn = "user:password@tcp(localhost:3306)/dbname?parseTime=true"  # parseTime=tru
 
 # notification config
 [notification]
-    should_notify_error_num = 10 # if api error num > 10 then notify
+should_notify_error_num = 10 # if api error num > 10 then notify
     [notification.pagerduty]
     auth_token = "******"
     service_id = "******"

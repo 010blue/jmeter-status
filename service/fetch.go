@@ -73,9 +73,9 @@ func notifyByPageduty(tomlConfig *config.TomlConfig) {
 	data := []byte(`{
 		"incident": {
 		  "type": "incident",
-		  "title": "` + tomlConfig.Notification.Pageduty.NotificationTitle + `",
+		  "title": "` + tomlConfig.Notification.Pagerduty.NotificationTitle + `",
 		  "service": {
-			"id": "` + tomlConfig.Notification.Pageduty.ServiceID + `",
+			"id": "` + tomlConfig.Notification.Pagerduty.ServiceID + `",
 			"type": "service_reference"
 		  }
 		}
@@ -83,8 +83,8 @@ func notifyByPageduty(tomlConfig *config.TomlConfig) {
 	request, _ := http.NewRequest("POST", "https://api.pagerduty.com/incidents", bytes.NewBuffer(data))
 	request.Header.Set("Content-type", "application/json; charset=utf-8")
 	request.Header.Set("Accept", "application/vnd.pagerduty+json;version=2")
-	request.Header.Set("Authorization", "Token token="+tomlConfig.Notification.Pageduty.AuthToken)
-	request.Header.Set("From", tomlConfig.Notification.Pageduty.From)
+	request.Header.Set("Authorization", "Token token="+tomlConfig.Notification.Pagerduty.AuthToken)
+	request.Header.Set("From", tomlConfig.Notification.Pagerduty.From)
 	_, err := http.DefaultClient.Do(request)
 	if err != nil {
 		log.Println(err)

@@ -54,7 +54,7 @@ type PagerdutyConfig struct {
 // NotificationConfig struct
 type NotificationConfig struct {
 	ShouldNotifyErrorNum int `toml:"should_notify_error_num"`
-	Pageduty             PagerdutyConfig
+	Pagerduty            PagerdutyConfig
 }
 
 // TomlConfig struct
