@@ -11,6 +11,15 @@ rows = 24
 [mysql]
 dsn = "user:password@tcp(localhost:3306)/dbname?parseTime=true"  # parseTime=true need to be retained
 
+# notification config
+[notification]
+    should_notify_error_num = 10 # if api error num > 10 then notify
+    [notification.pagerduty]
+    auth_token = "******"
+    service_id = "******"
+    from = "**@**.com"
+    notification_title = "Weak up! Server is down."
+
 #  array, JMeter jtl list website addresses
 [[websites]]
 id = 1 # must exist, unique

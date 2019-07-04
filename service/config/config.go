@@ -43,13 +43,28 @@ type MysqlConfig struct {
 	DSN string
 }
 
+// PagerdutyConfig struct
+type PagerdutyConfig struct {
+	AuthToken         string `toml:"auth_token"`
+	ServiceID         string `toml:"service_id"`
+	From              string `toml:"from"`
+	NotificationTitle string `toml:"notification_title"`
+}
+
+// NotificationConfig struct
+type NotificationConfig struct {
+	ShouldNotifyErrorNum int `toml:"should_notify_error_num"`
+	Pageduty             PagerdutyConfig
+}
+
 // TomlConfig struct
 type TomlConfig struct {
-	Title    string
-	Mysql    MysqlConfig
-	Websites []Website
-	Datapath string
-	Rows     int
+	Title        string
+	Mysql        MysqlConfig
+	Notification NotificationConfig
+	Websites     []Website
+	Datapath     string
+	Rows         int
 }
 
 var configFile = "config/config.toml"

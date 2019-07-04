@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/csv"
 	"encoding/json"
@@ -62,6 +63,32 @@ func fileExist(file string) bool {
 		return false
 	}
 	return true
+}
+
+func notify(tomlConfig *config.TomlConfig) {
+	notifyByPageduty(tomlConfig) // default by Pageduty
+}
+
+func notifyByPageduty(tomlConfig *config.TomlConfig) {
+	data := []byte(`{
+		"incident": {
+		  "type": "incident",
+		  "title": "` + tomlConfig.Notification.Pageduty.NotificationTitle + `",
+		  "service": {
+			"id": "` + tomlConfig.Notification.Pageduty.ServiceID + `",
+			"type": "service_reference"
+		  }
+		}
+	  }`)
+	request, _ := http.NewRequest("POST", "https://api.pagerduty.com/incidents", bytes.NewBuffer(data))
+	request.Header.Set("Content-type", "application/json; charset=utf-8")
+	request.Header.Set("Accept", "application/vnd.pagerduty+json;version=2")
+	request.Header.Set("Authorization", "Token token="+tomlConfig.Notification.Pageduty.AuthToken)
+	request.Header.Set("From", tomlConfig.Notification.Pageduty.From)
+	_, err := http.DefaultClient.Do(request)
+	if err != nil {
+		log.Println(err)
+	}
 }
 
 // get content with authorization or not
@@ -239,6 +266,8 @@ func main() {
 		cacheDataPath = tomlConfig.Datapath
 	}
 
+	hasNotified := false // only notify once
+
 	// /config
 	// fetch JMeter by index page
 	for websiteK, website := range dataContainer.Websites {
@@ -274,7 +303,7 @@ func main() {
 			links = links[linksLen-itemsLen : linksLen]
 		}
 
-		for _, link := range links {
+		for linkKey, link := range links {
 			apiTask := config.Task{
 				WebsiteID:  website.ID,
 				ExecutedAt: time.Now().UTC(),
@@ -353,6 +382,12 @@ func main() {
 			// Store to db
 			config.SyncTaskToDB(&apiTask, tomlConfig)
 			tasks = append(tasks, apiTask)
+
+			// the last task trigger notification
+			if linkKey == len(links)-1 && !hasNotified && apiTask.ErrCount >= tomlConfig.Notification.ShouldNotifyErrorNum {
+				hasNotified = true
+				notify(tomlConfig)
+			}
 		}
 
 		dataContainer.Websites[websiteK].Data = tasks
