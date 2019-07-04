@@ -66,10 +66,10 @@ func fileExist(file string) bool {
 }
 
 func notify(tomlConfig *config.TomlConfig) {
-	notifyByPageduty(tomlConfig) // default by Pageduty
+	notifyByPagerduty(tomlConfig) // default by Pagerduty
 }
 
-func notifyByPageduty(tomlConfig *config.TomlConfig) {
+func notifyByPagerduty(tomlConfig *config.TomlConfig) {
 	data := []byte(`{
 		"incident": {
 		  "type": "incident",
