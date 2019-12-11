@@ -1,0 +1,7 @@
+web/node_modules
+web/data
+web/package-lock.json
+service/vendor
+service/Gopkg.lock
+service/config/config.toml
+.DS_Store
