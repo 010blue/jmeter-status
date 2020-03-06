@@ -2,7 +2,7 @@
  * config & init chart
  */
 window.dataPath = "./data/";
-window.dataURL = window.dataPath + "today.json";
+window.dataURL = window.dataPath + "today.json" + "?" + Date.parse(new Date());
 window.chart;
 
 /**
@@ -205,14 +205,14 @@ function init(statusType){
 
     switch(statusType){
         case "week":
-            window.dataURL = window.dataPath + "week.json";
+            window.dataURL = window.dataPath + "week.json" + "?" + Date.parse(new Date());
             break;
         case "month":
-            window.dataURL = window.dataPath + "month.json";
+            window.dataURL = window.dataPath + "month.json" + "?" + Date.parse(new Date());
             break;
         case "today":
         default:
-            window.dataURL = window.dataPath + "today.json";
+            window.dataURL = window.dataPath + "today.json" + "?" + Date.parse(new Date());
             break;
     }
 
