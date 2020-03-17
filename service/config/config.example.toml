@@ -18,7 +18,7 @@ should_notify_error_num = 10 # if api error num > 10 then notify
     auth_token = "******"
     service_id = "******"
     from = "**@**.com"
-    notification_title = "Weak up! Server is down."
+    notification_title = "Get up! Server is down."
 
 #  array, JMeter jtl list website addresses
 [[websites]]
