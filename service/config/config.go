@@ -2,10 +2,11 @@ package config
 
 import (
 	"database/sql"
-	"github.com/BurntSushi/toml"
-	_ "github.com/go-sql-driver/mysql" // for mysql
 	"log"
 	"time"
+
+	"github.com/BurntSushi/toml"
+	_ "github.com/go-sql-driver/mysql" // for mysql
 )
 
 // Task : Task struct
@@ -126,6 +127,17 @@ func SyncTaskToDB(task *Task, tomlConfig *TomlConfig) (err error) {
 				return stmtErr
 			}
 			_, execErr := stmt.Exec(task.WebsiteID, task.File, task.Count, task.ErrCount, task.ErrRate, task.ExecutedAt, time.Now().UTC(), time.Now().UTC())
+			if execErr != nil {
+				log.Println(execErr)
+				return execErr
+			}
+		} else {
+			// update
+			stmt, stmtErr := db.Prepare("UPDATE tasks SET api_count = ?,api_error_count = ?,api_error_rate = ?,updated_at = ? WHERE id = ?")
+			if stmtErr != nil {
+				return stmtErr
+			}
+			_, execErr := stmt.Exec(task.Count, task.ErrCount, task.ErrRate, time.Now().UTC(), id)
 			if execErr != nil {
 				log.Println(execErr)
 				return execErr

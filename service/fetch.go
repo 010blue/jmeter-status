@@ -5,9 +5,6 @@ import (
 	"encoding/base64"
 	"encoding/csv"
 	"encoding/json"
-	config "github.com/010blue/jmeter-status/service/config"
-	"github.com/PuerkitoBio/goquery"
-	"github.com/jinzhu/now"
 	"io"
 	"io/ioutil"
 	"log"
@@ -16,6 +13,10 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	config "github.com/010blue/jmeter-status/service/config"
+	"github.com/PuerkitoBio/goquery"
+	"github.com/jinzhu/now"
 )
 
 // Jtl file content
@@ -320,7 +321,10 @@ func main() {
 			if fileExist(cacheDataPath + apiTask.File) {
 				linkContent, linkContentErr = ioutil.ReadFile(cacheDataPath + apiTask.File)
 			}
-			if linkContent == nil {
+
+			content := string(linkContent)
+
+			if linkContent == nil || content == "" {
 				// get content by remote
 				linkRes, linkErr := requestWithAuthorization(rootPath+"/"+apiTask.File, website.AuthUser, website.AuthPassword)
 				if linkErr != nil {
@@ -332,9 +336,10 @@ func main() {
 				}
 				// cache content
 				ioutil.WriteFile(cacheDataPath+apiTask.File, linkContent, 0644)
+
+				content = string(linkContent)
 			}
 
-			content := string(linkContent)
 			csvReader := csv.NewReader(strings.NewReader(content))
 
 			// count error rate

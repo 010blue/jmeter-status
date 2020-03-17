@@ -15,6 +15,9 @@
     create database dbname
     execute config/db.sql to mysql database
     
+## fetch build for linux
+    cd service
+    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build fetch.go 
 
 ## fetch data
     cd service
