@@ -21,6 +21,7 @@ import (
 
 // Jtl file content
 // type apirequest struct {
+// timeStamp,elapsed,label,responseCode,responseMessage,threadName,dataType,success,failureMessage,bytes,sentBytes,grpThreads,allThreads,URL,Latency,IdleTime,Connect
 // 	timeStamp       string
 // 	elapsed         string
 // 	label           string
@@ -33,15 +34,9 @@ import (
 // 	bytes           string
 // 	sentBytes       string
 // 	grpThreads      string
-// 	all             string
-// 	Threads         string
+// 	allThreads      string
 // 	URL             string
-// 	Filename        string
 // 	Latency         string
-// 	Encoding        string
-// 	SampleCount     string
-// 	ErrorCount      string
-// 	Hostname        string
 // 	IdleTime        string
 // 	Connect         string
 // }
@@ -352,7 +347,7 @@ func main() {
 					break
 				}
 
-				if len(csvRow) < 10 {
+				if len(csvRow) < 15 {
 					// pass if not enough items
 					continue
 				}
@@ -368,6 +363,34 @@ func main() {
 					}
 					// time default from the first row's timestamp
 					apiTask.ExecutedAt = createdAt
+
+					// label and method
+					label := csvRow[2]
+					labelArr := strings.Split(label, "-")
+					method := labelArr[len(labelArr)-1]
+					method = strings.ToLower(method)
+					if method != "get" && method != "post" && method != "3" {
+						method = ""
+					}
+
+					// store row data to db
+					status := config.Status{
+						TaskID:          apiTask.ID,
+						WebsiteID:       apiTask.WebsiteID,
+						Position:        website.Name,
+						URL:             csvRow[13],
+						Label:           label,
+						Timestamp:       apiTask.ExecutedAt,
+						Filename:        apiTask.File,
+						Elapsed:         csvRow[1],
+						Method:          method,
+						ResponseCode:    csvRow[3],
+						ResponseMessage: csvRow[4],
+						Success:         csvRow[7],
+						FailureMessage:  csvRow[8],
+					}
+
+					status.SaveToDB(tomlConfig)
 				}
 
 				apiTask.Count++
