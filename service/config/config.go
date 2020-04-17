@@ -62,7 +62,7 @@ func (status Status) SaveToDB(tomlConfig *TomlConfig) (err error) {
 	db := InitDB(tomlConfig)
 	defer db.Close()
 
-	// judge if row exists by file
+	// judge if row exists
 	statusRow := db.QueryRow("SELECT id FROM statuses WHERE `id`=?", status.ID)
 	var id int
 	statusRow.Scan(&id)
